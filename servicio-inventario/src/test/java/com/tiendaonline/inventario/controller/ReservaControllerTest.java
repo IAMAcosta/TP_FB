@@ -98,6 +98,18 @@ class ReservaControllerTest {
     }
 
     @Test
+    void postReservaConJsonMalEscritoDevuelve400() throws Exception {
+
+        mockMvc.perform(post("/reservas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productoId\": 5,"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("El cuerpo de la petición no es un JSON válido"));
+
+        verify(reservaService, never()).reservar(any());
+    }
+
+    @Test
     void postReservaSinStockSuficienteDevuelve409() throws Exception {
 
         when(reservaService.reservar(any()))
