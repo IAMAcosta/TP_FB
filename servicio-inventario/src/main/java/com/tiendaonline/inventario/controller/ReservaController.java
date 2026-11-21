@@ -2,6 +2,8 @@ package com.tiendaonline.inventario.controller;
 
 import com.tiendaonline.inventario.dto.ErrorResponse;
 import com.tiendaonline.inventario.dto.ReservaCrearRequest;
+import com.tiendaonline.inventario.dto.ReservaLiberarRequest;
+import com.tiendaonline.inventario.dto.ReservaLiberarResponse;
 import com.tiendaonline.inventario.dto.ReservaResponse;
 import com.tiendaonline.inventario.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,5 +37,14 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "No hay stock suficiente", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ReservaResponse reservar(@Valid @RequestBody ReservaCrearRequest request) {
         return reservaService.reservar(request);
+    }
+
+    @PostMapping("/liberacion")
+    @Operation(summary = "Libera todas las reservas activas de un pedido",
+            description = "Si se llama dos veces para el mismo pedido, la segunda vez no devuelve stock y responde reservasLiberadas = 0.")
+    @ApiResponse(responseCode = "200", description = "Reservas liberadas")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public ReservaLiberarResponse liberar(@Valid @RequestBody ReservaLiberarRequest request) {
+        return reservaService.liberar(request);
     }
 }
