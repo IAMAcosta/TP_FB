@@ -52,10 +52,15 @@ class InventarioClientTest {
         client = new InventarioClient("http://localhost:" + puerto, 500);
     }
 
+    // ---------- reservar ----------
+
     @Test
     void reservarEnviaElCuerpoYDevuelveLaReserva() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas").withBody(json("{\"pedidoId\":10,\"productoId\":3,\"cantidad\":2}")))
-                .respond(response().withStatusCode(201).withContentType(MediaType.APPLICATION_JSON).withBody("{\"id\":1,\"pedidoId\":10,\"productoId\":3,\"cantidad\":2,\"estado\":\"ACTIVA\",\"extra\":\"x\"}"));
+        mockServer.when(request().withMethod("POST").withPath("/reservas")
+                        .withBody(json("{\"pedidoId\":10,\"productoId\":3,\"cantidad\":2}")))
+                .respond(response().withStatusCode(201)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withBody("{\"id\":1,\"pedidoId\":10,\"productoId\":3,\"cantidad\":2,\"estado\":\"ACTIVA\",\"fechaCreacion\":\"2026-11-21T19:00:00\"}"));
 
         ReservaResponse reserva = client.reservar(10, 3, 2);
 
@@ -67,61 +72,92 @@ class InventarioClientTest {
 
     @Test
     void reservarLanzaStockInsuficienteSiInventarioResponde409() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas")).respond(response().withStatusCode(409));
+        mockServer.when(request().withMethod("POST").withPath("/reservas"))
+                .respond(response().withStatusCode(409));
 
-        assertThatThrownBy(() -> client.reservar(10, 3, 500)).isInstanceOf(StockInsuficienteException.class).hasMessageContaining("producto 3");
+        assertThatThrownBy(() -> client.reservar(10, 3, 500))
+                .isInstanceOf(StockInsuficienteException.class)
+                .hasMessageContaining("producto 3");
     }
 
     @Test
     void reservarLanzaProductoNoEncontradoSiInventarioResponde404() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas")).respond(response().withStatusCode(404));
+        mockServer.when(request().withMethod("POST").withPath("/reservas"))
+                .respond(response().withStatusCode(404));
 
-        assertThatThrownBy(() -> client.reservar(10, 77, 1)).isInstanceOf(ProductoNoEncontradoException.class);
+        assertThatThrownBy(() -> client.reservar(10, 77, 1))
+                .isInstanceOf(ProductoNoEncontradoException.class);
     }
 
     @Test
     void reservarLanzaServicioNoDisponibleSiInventarioResponde500() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas")).respond(response().withStatusCode(500));
+        mockServer.when(request().withMethod("POST").withPath("/reservas"))
+                .respond(response().withStatusCode(500));
 
-        assertThatThrownBy(() -> client.reservar(10, 3, 1)).isInstanceOf(ServicioNoDisponibleException.class).hasMessageContaining("servicio-inventario");
+        assertThatThrownBy(() -> client.reservar(10, 3, 1))
+                .isInstanceOf(ServicioNoDisponibleException.class)
+                .hasMessageContaining("servicio-inventario");
     }
 
     @Test
     void reservarLanzaServicioNoDisponibleSiHayTimeout() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas")).respond(response().withStatusCode(201).withDelay(TimeUnit.MILLISECONDS, 1500));
+        mockServer.when(request().withMethod("POST").withPath("/reservas"))
+                .respond(response().withStatusCode(201).withDelay(TimeUnit.MILLISECONDS, 1500));
 
-        assertThatThrownBy(() -> client.reservar(10, 3, 1)).isInstanceOf(ServicioNoDisponibleException.class);
+        assertThatThrownBy(() -> client.reservar(10, 3, 1))
+                .isInstanceOf(ServicioNoDisponibleException.class);
     }
 
     // ---------- liberar ----------
 
     @Test
-    void liberarEnviaElPedidoYTerminaSinErrores() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas/liberar").withBody(json("{\"pedidoId\":10}"))).respond(response().withStatusCode(204));
+    void liberarEnviaElPedidoYDevuelveCuantasReservasLiberoInventario() {
+        mockServer.when(request().withMethod("POST").withPath("/reservas/liberacion")
+                        .withBody(json("{\"pedidoId\":10}")))
+                .respond(response().withStatusCode(200)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withBody("{\"pedidoId\":10,\"reservasLiberadas\":2}"));
 
-        assertThatCode(() -> client.liberar(10)).doesNotThrowAnyException();
+        assertThat(client.liberar(10)).isEqualTo(2);
 
-        mockServer.verify(request().withMethod("POST").withPath("/reservas/liberar").withBody(json("{\"pedidoId\":10}")));
+        mockServer.verify(request().withMethod("POST").withPath("/reservas/liberacion")
+                .withBody(json("{\"pedidoId\":10}")));
     }
 
     @Test
-    void liberarEsIdempotenteSiNoHabiaReservas() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas/liberar")).respond(response().withStatusCode(404));
+    void liberarEsIdempotenteSiNoHabiaReservasActivas() {
+        mockServer.when(request().withMethod("POST").withPath("/reservas/liberacion"))
+                .respond(response().withStatusCode(200)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withBody("{\"pedidoId\":10,\"reservasLiberadas\":0}"));
 
-        assertThatCode(() -> client.liberar(10)).doesNotThrowAnyException();
+        assertThatCode(() -> assertThat(client.liberar(10)).isZero()).doesNotThrowAnyException();
     }
 
     @Test
     void liberarLanzaServicioNoDisponibleSiInventarioResponde500() {
-        mockServer.when(request().withMethod("POST").withPath("/reservas/liberar")).respond(response().withStatusCode(500));
+        mockServer.when(request().withMethod("POST").withPath("/reservas/liberacion"))
+                .respond(response().withStatusCode(500));
 
-        assertThatThrownBy(() -> client.liberar(10)).isInstanceOf(ServicioNoDisponibleException.class);
+        assertThatThrownBy(() -> client.liberar(10))
+                .isInstanceOf(ServicioNoDisponibleException.class);
+    }
+
+    @Test
+    void liberarNoIgnoraUn404PorqueSeriaUnaRutaEquivocada() {
+        mockServer.when(request().withMethod("POST").withPath("/reservas/liberacion"))
+                .respond(response().withStatusCode(404));
+
+        assertThatThrownBy(() -> client.liberar(10))
+                .isInstanceOf(ServicioNoDisponibleException.class)
+                .hasMessageContaining("404");
     }
 
     @Test
     void liberarLanzaServicioNoDisponibleSiNadieEscucha() throws IOException {
         InventarioClient sinServidor = new InventarioClient("http://localhost:" + puertoLibre(), 500);
 
-        assertThatThrownBy(() -> sinServidor.liberar(10)).isInstanceOf(ServicioNoDisponibleException.class);
+        assertThatThrownBy(() -> sinServidor.liberar(10))
+                .isInstanceOf(ServicioNoDisponibleException.class);
     }
 }

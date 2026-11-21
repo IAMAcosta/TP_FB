@@ -1,6 +1,7 @@
 package com.tiendaonline.pedidos.client;
 
 import com.tiendaonline.pedidos.dto.LiberarReservaRequest;
+import com.tiendaonline.pedidos.dto.LiberarReservaResponse;
 import com.tiendaonline.pedidos.dto.ReservaRequest;
 import com.tiendaonline.pedidos.dto.ReservaResponse;
 import com.tiendaonline.pedidos.exception.ProductoNoEncontradoException;
@@ -60,28 +61,32 @@ public class InventarioClient {
     }
 
     /**
-     * Libera las reservas activas del pedido (POST /reservas/liberar)
-     * Idempotente pq si inventario responde 404 no se considera error, para que la compensación pueda repetirse sin fallar.
+     * Libera todas las reservas activas del pedido (POST /reservas/liberacion).
+     * Es idempotente: si no había reservas activas, Inventario responde 200 con reservasLiberadas = 0,
+     * así que la compensación puede repetirse sin problema.
      *
-     * @throws ServicioNoDisponibleException si no responde, hace timeout o devuelve otro error
+     * @return cantidad de reservas que se liberaron
+     * @throws ServicioNoDisponibleException si no responde, hace timeout o devuelve cualquier estado no 2xx
+     *                                       (un 404 acá sería una ruta equivocada, no "nada que liberar")
      */
-    public void liberar(Integer pedidoId) {
+    public int liberar(Integer pedidoId) {
         try {
-            restClient.post()
-                    .uri("/reservas/liberar")
+            int liberadas = restClient.post()
+                    .uri("/reservas/liberacion")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new LiberarReservaRequest(pedidoId))
                     .exchange((request, response) -> {
                         HttpStatusCode estado = response.getStatusCode();
                         if (estado.is2xxSuccessful()) {
-                            return null;
-                        }
-                        if (estado.value() == 404) {
-                            log.warn("Inventario no tenía reservas para liberar del pedido {}", pedidoId);
-                            return null;
+                            LiberarReservaResponse cuerpo = response.bodyTo(LiberarReservaResponse.class);
+                            return cuerpo == null || cuerpo.reservasLiberadas() == null
+                                    ? 0
+                                    : cuerpo.reservasLiberadas();
                         }
                         throw new ServicioNoDisponibleException(SERVICIO, "respondió con estado " + estado.value());
                     });
+            log.info("Inventario liberó {} reserva(s) del pedido {}", liberadas, pedidoId);
+            return liberadas;
         } catch (ResourceAccessException e) {
             throw new ServicioNoDisponibleException(SERVICIO, e);
         }
