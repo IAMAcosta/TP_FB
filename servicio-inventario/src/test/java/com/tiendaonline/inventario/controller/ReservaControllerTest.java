@@ -1,5 +1,6 @@
 package com.tiendaonline.inventario.controller;
 
+import com.tiendaonline.inventario.dto.ReservaLiberarResponse;
 import com.tiendaonline.inventario.dto.ReservaResponse;
 import com.tiendaonline.inventario.exception.ProductoNoEncontradoException;
 import com.tiendaonline.inventario.exception.StockInsuficienteException;
@@ -136,5 +137,43 @@ class ReservaControllerTest {
                         .content(json))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("No existe un producto con id 99"));
+    }
+
+    @Test
+    void postLiberacionDevuelve200ConLaCantidadDeReservasLiberadas() throws Exception {
+
+        when(reservaService.liberar(any()))
+                .thenReturn(new ReservaLiberarResponse(21, 2));
+
+        mockMvc.perform(post("/reservas/liberacion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pedidoId\": 21}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pedidoId").value(21))
+                .andExpect(jsonPath("$.reservasLiberadas").value(2));
+    }
+
+    @Test
+    void postLiberacionSinPedidoIdDevuelve400() throws Exception {
+
+        mockMvc.perform(post("/reservas/liberacion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("pedidoId: es obligatorio"));
+
+        verify(reservaService, never()).liberar(any());
+    }
+
+    @Test
+    void postLiberacionConPedidoIdCeroDevuelve400() throws Exception {
+
+        mockMvc.perform(post("/reservas/liberacion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pedidoId\": 0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value("pedidoId: debe ser mayor a 0"));
+
+        verify(reservaService, never()).liberar(any());
     }
 }
