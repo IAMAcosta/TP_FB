@@ -89,6 +89,45 @@ class ReservaRepositoryTest {
     }
 
     @Test
+    void findByPedidoIdAndProductoIdEncuentraLaReservaDeEsePedidoYProducto() {
+        Producto producto = producto("SKU-R6", 10);
+        reservaRepository.saveAndFlush(new Reserva(producto, 600, 2));
+
+        assertThat(reservaRepository.findByPedidoIdAndProductoId(600, producto.getId()))
+                .get()
+                .extracting(Reserva::getCantidad)
+                .isEqualTo(2);
+        assertThat(reservaRepository.findByPedidoIdAndProductoId(601, producto.getId())).isEmpty();
+    }
+
+    @Test
+    void buscarActivasParaActualizarDevuelveSoloLasActivasDelPedido() {
+        Producto a = producto("SKU-R7A", 10);
+        Producto b = producto("SKU-R7B", 10);
+        Reserva liberada = reservaRepository.saveAndFlush(new Reserva(a, 700, 1));
+        liberada.liberar();
+        reservaRepository.saveAndFlush(liberada);
+        reservaRepository.saveAndFlush(new Reserva(b, 700, 2));
+        reservaRepository.saveAndFlush(new Reserva(a, 701, 1));
+        em.clear();
+
+        List<Reserva> activas = reservaRepository.buscarActivasParaActualizar(700);
+
+        assertThat(activas).hasSize(1);
+        assertThat(activas.get(0).getCantidad()).isEqualTo(2);
+        assertThat(activas.get(0).getEstado()).isEqualTo(EstadoReserva.ACTIVA);
+    }
+
+    @Test
+    void laBaseRechazaDosReservasDelMismoPedidoYProducto() {
+        Producto producto = producto("SKU-R8", 10);
+        reservaRepository.saveAndFlush(new Reserva(producto, 800, 1));
+
+        assertThatThrownBy(() -> reservaRepository.saveAndFlush(new Reserva(producto, 800, 3)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
     void labaseRechazaCantidadCero() {
         Producto producto = producto("SKU-R5", 10);
 
