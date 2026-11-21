@@ -1,6 +1,7 @@
 package com.tiendaonline.inventario.exception;
 
 import com.tiendaonline.inventario.dto.ErrorResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,6 +31,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleStockInsuficiente(StockInsuficienteException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReservaConflictoException.class)
+    public ResponseEntity<ErrorResponse> handleReservaConflicto(ReservaConflictoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDatosInvalidos(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT,
+                        "La operación no se pudo guardar porque entra en conflicto con datos existentes"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

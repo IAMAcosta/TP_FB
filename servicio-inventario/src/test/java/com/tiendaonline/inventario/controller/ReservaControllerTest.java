@@ -3,6 +3,7 @@ package com.tiendaonline.inventario.controller;
 import com.tiendaonline.inventario.dto.ReservaLiberarResponse;
 import com.tiendaonline.inventario.dto.ReservaResponse;
 import com.tiendaonline.inventario.exception.ProductoNoEncontradoException;
+import com.tiendaonline.inventario.exception.ReservaConflictoException;
 import com.tiendaonline.inventario.exception.StockInsuficienteException;
 import com.tiendaonline.inventario.service.ReservaService;
 import org.junit.jupiter.api.Test;
@@ -137,6 +138,19 @@ class ReservaControllerTest {
                         .content(json))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("No existe un producto con id 99"));
+    }
+
+    @Test
+    void postReservaRepetidaConOtraCantidadDevuelve409() throws Exception {
+
+        when(reservaService.reservar(any()))
+                .thenThrow(new ReservaConflictoException("El pedido 21 ya tiene una reserva del producto 5 por 3 unidades"));
+
+        mockMvc.perform(post("/reservas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productoId\": 5, \"pedidoId\": 21, \"cantidad\": 4}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensaje").value("El pedido 21 ya tiene una reserva del producto 5 por 3 unidades"));
     }
 
     @Test
