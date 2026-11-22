@@ -9,6 +9,7 @@ import com.tiendaonline.pedidos.entity.EstadoPedido;
 import com.tiendaonline.pedidos.entity.ItemPedido;
 import com.tiendaonline.pedidos.entity.Pedido;
 import com.tiendaonline.pedidos.exception.ClienteNoEncontradoException;
+import com.tiendaonline.pedidos.exception.EstadoPedidoInvalidoException;
 import com.tiendaonline.pedidos.exception.PedidoInvalidoException;
 import com.tiendaonline.pedidos.exception.PedidoNoEncontradoException;
 import com.tiendaonline.pedidos.repository.PedidoRepository;
@@ -67,6 +68,24 @@ public class PedidoService {
             throw e;
         }
 
+        return PedidoResponse.from(pedido);
+    }
+
+    @Transactional
+    public PedidoResponse cancelar(Integer id) {
+        Pedido pedido = pedidoRepository.findByIdConItems(id)
+                .orElseThrow(() -> new PedidoNoEncontradoException(id));
+
+        if (!pedido.getEstado().puedeCancelarse()) {
+            log.warn("No se puede cancelar el pedido {} porque está {}", id, pedido.getEstado());
+            throw new EstadoPedidoInvalidoException(id, pedido.getEstado());
+        }
+
+        inventarioClient.liberar(id);
+
+        pedido.setEstado(EstadoPedido.CANCELADO);
+        pedidoRepository.saveAndFlush(pedido);
+        log.info("Pedido {} cancelado", id);
         return PedidoResponse.from(pedido);
     }
 

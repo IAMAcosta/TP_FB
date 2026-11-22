@@ -20,8 +20,8 @@ public class GlobalExceptionHandler {
         return respuesta(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(StockInsuficienteException.class)
-    public ResponseEntity<ErrorResponse> handleStockInsuficiente(StockInsuficienteException ex) {
+    @ExceptionHandler({StockInsuficienteException.class, EstadoPedidoInvalidoException.class})
+    public ResponseEntity<ErrorResponse> handleConflicto(RuntimeException ex) {
         return respuesta(HttpStatus.CONFLICT, ex.getMessage());
     }
 
