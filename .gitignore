@@ -12,3 +12,9 @@ build/
 HELP.md
 
 .claude/
+
+# carpetas que genera VS Code
+bin/
+
+# logs de la aplicacion (logback-spring.xml)
+logs/

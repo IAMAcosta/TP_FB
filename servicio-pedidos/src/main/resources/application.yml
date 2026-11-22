@@ -18,3 +18,19 @@ spring:
   batch:
     job:
       enabled: false
+
+# TP-032 observabilidad
+management:
+  tracing:
+    sampling:
+      probability: 1.0   # trazamos todas las requests
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
