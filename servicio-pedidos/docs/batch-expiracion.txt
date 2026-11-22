@@ -1,0 +1,17 @@
+Batch de expiracion de pedidos
+
+Busca los pedidos que estan en estado CREADO hace más de X minutos, libera su reserva de stock en servicio-inventario y dsps los pasa a EXPIRADO.
+
+- Un job (expirarPedidosJob) con un solo step que procesa de a 20 pedidos.
+- Primero se libera el stock y dsps se marca el pedido como EXPIRADO. Si falla algo, el pedido queda CREADO y la próxima corrida lo reintenta. Liberar es idempotente, asiq no rompe nada repetirlo.
+- Para leer los pedidos hay que paginar por id, porq al expirar un pedido cambia su estado y el offset se salteaba filas.
+- Si inventario no responde, se saltea ese pedido y sigue con el resto.
+
+
+Tablas de metadatos
+Spring batch guarda el historial de ejecuciones en 6 tablas BATCH_* y 3 secuencias. Con PostgreSQL no las crea solo, asi que estan en la migracion V2__spring_batch_metadata.sql.
+
+
+Configuracion (application.yml)
+- spring.batch.jdbc.initialize-schema: never  (las crea Flyway)
+- spring.batch.job.enabled: false  (el job no corre al arrancar la app)
