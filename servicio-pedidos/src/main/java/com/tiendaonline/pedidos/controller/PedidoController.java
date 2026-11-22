@@ -54,6 +54,17 @@ public class PedidoController {
         return pedidoService.obtenerPorId(id);
     }
 
+    @PostMapping("/{id}/cancelacion")
+    @Operation(summary = "Cancela un pedido", description = "Solo se pueden cancelar pedidos CREADO o CONFIRMADO. " + "Primero libera el stock reservado en Inventario y después pasa el pedido a CANCELADO.")
+    @ApiResponse(responseCode = "200", description = "Pedido cancelado")
+    @ApiResponse(responseCode = "400", description = "El id no es un número", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "El pedido no existe", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "El pedido ya está CANCELADO o EXPIRADO", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "503", description = "Inventario no disponible: el pedido no se cancela", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    public PedidoResponse cancelar(@PathVariable Integer id) {
+        return pedidoService.cancelar(id);
+    }
+
     @GetMapping
     @Operation(summary = "Lista los pedidos de un cliente", description = "Devuelve una lista vacía si el cliente no tiene pedidos.")
     @ApiResponse(responseCode = "200", description = "Pedidos del cliente")
