@@ -21,6 +21,7 @@ spring:
     jdbc:
       initialize-schema: never
 
+<<<<<<< HEAD
 # TP-032 observabilidad
 management:
   tracing:
@@ -36,3 +37,8 @@ management:
     distribution:
       percentiles-histogram:
         "[http.server.requests]": true
+=======
+servicios:
+    inevntario: 
+        url: http://localhost:8082
+>>>>>>> 1c17ac2 (Tarea 029)
