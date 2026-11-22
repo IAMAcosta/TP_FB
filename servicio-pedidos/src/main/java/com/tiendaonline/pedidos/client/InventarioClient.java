@@ -1,5 +1,6 @@
 package com.tiendaonline.pedidos.client;
 
+import com.tiendaonline.pedidos.dto.ErrorRemotoResponse;
 import com.tiendaonline.pedidos.dto.LiberarReservaRequest;
 import com.tiendaonline.pedidos.dto.LiberarReservaResponse;
 import com.tiendaonline.pedidos.dto.ReservaRequest;
@@ -48,7 +49,17 @@ public class InventarioClient {
                             return response.bodyTo(ReservaResponse.class);
                         }
                         if (estado.value() == 409) {
-                            throw new StockInsuficienteException(productoId, cantidad);
+                            // 409 = falta stock o conflicto con una reserva existente: se propaga el motivo de Inventario
+                            String motivo = null;
+                            try {
+                                ErrorRemotoResponse error = response.bodyTo(ErrorRemotoResponse.class);
+                                motivo = error == null ? null : error.mensaje();
+                            } catch (RuntimeException sinCuerpoLegible) {
+                                // se usa el mensaje por defecto
+                            }
+                            throw motivo == null || motivo.isBlank()
+                                    ? new StockInsuficienteException(productoId, cantidad)
+                                    : new StockInsuficienteException(motivo);
                         }
                         if (estado.value() == 404) {
                             throw new ProductoNoEncontradoException(productoId);
@@ -61,13 +72,11 @@ public class InventarioClient {
     }
 
     /**
-     * Libera todas las reservas activas del pedido (POST /reservas/liberacion).
-     * Es idempotente: si no había reservas activas, Inventario responde 200 con reservasLiberadas = 0,
-     * así que la compensación puede repetirse sin problema.
+     * Libera todas las reservas activas del pedido (POST /reservas/liberacion)
+     * idempotente pq si no había reservas activas, Inventario responde 200 con reservasLiberadas = 0 entonces la compensación puede repetirse sin problema.
      *
      * @return cantidad de reservas que se liberaron
      * @throws ServicioNoDisponibleException si no responde, hace timeout o devuelve cualquier estado no 2xx
-     *                                       (un 404 acá sería una ruta equivocada, no "nada que liberar")
      */
     public int liberar(Integer pedidoId) {
         try {
