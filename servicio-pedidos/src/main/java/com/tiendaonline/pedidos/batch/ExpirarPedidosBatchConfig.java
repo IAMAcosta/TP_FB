@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClientException;
+import com.tiendaonline.pedidos.exception.ServicioNoDisponibleException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -62,6 +63,7 @@ public class ExpirarPedidosBatchConfig {
                 .writer(writer)
                 .faultTolerant()
                 .processorNonTransactional()
+                .skip(ServicioNoDisponibleException.class)
                 .skip(RestClientException.class)
                 .skipLimit(100)
                 .listener(resumenStepListener())

@@ -80,8 +80,13 @@ class ExpirarPedidosBatchIntegrationTest {
         mockServer.when(
                 request()
                         .withMethod("POST")
-                        .withPath("/reservas/pedido/" + idVencido + "/liberar")
-        ).respond(response().withStatusCode(200));
+                        .withPath("/reservas/liberacion")
+        ).respond(
+                response()
+                        .withStatusCode(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"reservasLiberadas\": 1}")
+        );
 
         mockMvc.perform(post("/batch/expirar-pedidos"))
                 .andExpect(status().isOk())
@@ -94,7 +99,7 @@ class ExpirarPedidosBatchIntegrationTest {
         assertEquals(EstadoPedido.EXPIRADO, pedidoRepository.findById(idVencido).orElseThrow().getEstado());
         assertEquals(EstadoPedido.CREADO, pedidoRepository.findById(idReciente).orElseThrow().getEstado());
         mockServer.verify(
-                request().withMethod("POST").withPath("/reservas/pedido/" + idVencido + "/liberar"),
+                request().withMethod("POST").withPath("/reservas/liberacion"),
                 once()
         );
 

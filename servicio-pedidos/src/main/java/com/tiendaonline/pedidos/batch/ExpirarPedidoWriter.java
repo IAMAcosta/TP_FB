@@ -26,7 +26,7 @@ public class ExpirarPedidoWriter implements ItemWriter<Pedido> {
     public void write(Chunk<? extends Pedido> chunk) {
         for (Pedido pedido : chunk.getItems()) {
             try {
-                inventarioClient.liberarReservaPorPedido(pedido.getId());
+                inventarioClient.liberar(pedido.getId());
             } catch (RuntimeException e) {
                 log.warn("No se pudo liberar stock para pedido id={} en servicio-inventario: {}",
                         pedido.getId(), e.getMessage());

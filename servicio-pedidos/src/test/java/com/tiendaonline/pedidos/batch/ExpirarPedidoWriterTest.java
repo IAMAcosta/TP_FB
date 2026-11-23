@@ -3,6 +3,7 @@ package com.tiendaonline.pedidos.batch;
 import com.tiendaonline.pedidos.client.InventarioClient;
 import com.tiendaonline.pedidos.entity.EstadoPedido;
 import com.tiendaonline.pedidos.entity.Pedido;
+import com.tiendaonline.pedidos.exception.ServicioNoDisponibleException;
 import com.tiendaonline.pedidos.repository.PedidoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.item.Chunk;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ class ExpirarPedidoWriterTest {
         writer.write(new Chunk<>(List.of(pedido)));
 
         InOrder orden = inOrder(inventarioClient, pedidoRepository);
-        orden.verify(inventarioClient).liberarReservaPorPedido(10);
+        orden.verify(inventarioClient).liberar(10);
         orden.verify(pedidoRepository).save(pedido);
     }
 
@@ -50,10 +50,10 @@ class ExpirarPedidoWriterTest {
         ReflectionTestUtils.setField(pedido, "id", 11);
         pedido.setEstado(EstadoPedido.EXPIRADO);
 
-        doThrow(new RestClientException("Inventario no disponible"))
-                .when(inventarioClient).liberarReservaPorPedido(11);
+        when(inventarioClient.liberar(11))
+                .thenThrow(new ServicioNoDisponibleException("servicio-inventario", "no disponible"));
 
-        assertThrows(RestClientException.class, () -> writer.write(new Chunk<>(List.of(pedido))));
+        assertThrows(ServicioNoDisponibleException.class, () -> writer.write(new Chunk<>(List.of(pedido))));
 
         verify(pedidoRepository, never()).save(any());
     }
