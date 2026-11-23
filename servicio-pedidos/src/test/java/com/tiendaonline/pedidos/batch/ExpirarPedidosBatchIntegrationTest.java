@@ -241,6 +241,86 @@ class ExpirarPedidosBatchIntegrationTest {
         );
     }
 
+    @Test
+    void noDebeExpirarPedidosConMenosDe24hNiEnEstadosDistintosACreado() throws Exception {
+        Integer idCreadoVencido = insertarPedido("CREADO", 25);
+        Integer idCreadoEnBorde = insertarPedido("CREADO", 23);
+        Integer idConfirmadoViejo = insertarPedido("CONFIRMADO", 30);
+        Integer idCanceladoViejo = insertarPedido("CANCELADO", 30);
+        Integer idYaExpirado = insertarPedido("EXPIRADO", 48);
+
+        mockServer.when(
+                request()
+                        .withMethod("POST")
+                        .withPath("/reservas/liberacion")
+        ).respond(
+                response()
+                        .withStatusCode(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"reservasLiberadas\": 1}")
+        );
+
+        mockMvc.perform(post("/batch/expirar-pedidos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("COMPLETED"))
+                .andExpect(jsonPath("$.pedidosLeidos").value(1))
+                .andExpect(jsonPath("$.pedidosExpirados").value(1))
+                .andExpect(jsonPath("$.pedidosOmitidosPorError").value(0));
+
+        assertEquals(EstadoPedido.EXPIRADO, pedidoRepository.findById(idCreadoVencido).orElseThrow().getEstado());
+        assertEquals(EstadoPedido.CREADO, pedidoRepository.findById(idCreadoEnBorde).orElseThrow().getEstado());
+        assertEquals(EstadoPedido.CONFIRMADO, pedidoRepository.findById(idConfirmadoViejo).orElseThrow().getEstado());
+        assertEquals(EstadoPedido.CANCELADO, pedidoRepository.findById(idCanceladoViejo).orElseThrow().getEstado());
+        assertEquals(EstadoPedido.EXPIRADO, pedidoRepository.findById(idYaExpirado).orElseThrow().getEstado());
+
+        mockServer.verify(
+                request()
+                        .withMethod("POST")
+                        .withPath("/reservas/liberacion")
+                        .withBody(regex(".*:\\s*" + idCreadoVencido + "\\s*[},].*")),
+                VerificationTimes.once()
+        );
+        mockServer.verify(
+                request().withMethod("POST").withPath("/reservas/liberacion"),
+                VerificationTimes.once()
+        );
+    }
+
+    @Test
+    void debeProcesarMultiplesChunksCuandoSuperaElChunkSize() throws Exception {
+        List<Integer> idsVencidos = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            idsVencidos.add(insertarPedido("CREADO", 25 + i));
+        }
+
+        mockServer.when(
+                request()
+                        .withMethod("POST")
+                        .withPath("/reservas/liberacion")
+        ).respond(
+                response()
+                        .withStatusCode(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"reservasLiberadas\": 1}")
+        );
+
+        mockMvc.perform(post("/batch/expirar-pedidos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("COMPLETED"))
+                .andExpect(jsonPath("$.pedidosLeidos").value(12))
+                .andExpect(jsonPath("$.pedidosExpirados").value(12))
+                .andExpect(jsonPath("$.pedidosOmitidosPorError").value(0));
+
+        for (Integer id : idsVencidos) {
+            assertEquals(EstadoPedido.EXPIRADO, pedidoRepository.findById(id).orElseThrow().getEstado());
+        }
+
+        mockServer.verify(
+                request().withMethod("POST").withPath("/reservas/liberacion"),
+                VerificationTimes.exactly(12)
+        );
+    }
+
     private Integer insertarPedido(String estado, int horasAtras) {
         Integer id = jdbcTemplate.queryForObject(
                 "INSERT INTO pedidos (cliente_id, estado, monto_total, fecha_creacion, fecha_actualizacion) " +
