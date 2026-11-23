@@ -13,8 +13,8 @@ public class ClientesClient {
 
     private final RestClient restClient;
 
-    public ClientesClient(@Value("${servicios.clientes.url:http://localhost:8081}") String baseUrl, @Value("${servicios.timeout-ms:5000}") int timeoutMs) {
-        this.restClient = RestClients.crear(baseUrl, timeoutMs);
+    public ClientesClient(RestClient.Builder builder, @Value("${servicios.clientes.url:http://localhost:8081}") String baseUrl, @Value("${servicios.timeout-ms:5000}") int timeoutMs) {
+        this.restClient = RestClients.crear(builder, baseUrl, timeoutMs);
     }
 
     /**

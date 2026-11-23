@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.MediaType;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -49,7 +50,7 @@ class InventarioClientTest {
     @BeforeEach
     void preparar() {
         mockServer.reset();
-        client = new InventarioClient("http://localhost:" + puerto, 500);
+        client = new InventarioClient(RestClient.builder(), "http://localhost:" + puerto, 500);
     }
 
     @Test
@@ -154,7 +155,7 @@ class InventarioClientTest {
 
     @Test
     void liberarLanzaServicioNoDisponibleSiNadieEscucha() throws IOException {
-        InventarioClient sinServidor = new InventarioClient("http://localhost:" + puertoLibre(), 500);
+        InventarioClient sinServidor = new InventarioClient(RestClient.builder(), "http://localhost:" + puertoLibre(), 500);
 
         assertThatThrownBy(() -> sinServidor.liberar(10)).isInstanceOf(ServicioNoDisponibleException.class);
     }

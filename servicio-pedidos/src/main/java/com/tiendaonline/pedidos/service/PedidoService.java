@@ -68,6 +68,7 @@ public class PedidoService {
             throw e;
         }
 
+        log.info("Pedido {} creado para el cliente {} con {} ítem(s)", pedido.getId(), request.clienteId(), request.items().size());
         return PedidoResponse.from(pedido);
     }
 

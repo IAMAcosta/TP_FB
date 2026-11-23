@@ -8,11 +8,11 @@ final class RestClients {
     private RestClients() {
     }
 
-    static RestClient crear(String baseUrl, int timeoutMs) {
+    static RestClient crear(RestClient.Builder builder, String baseUrl, int timeoutMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeoutMs);
         factory.setReadTimeout(timeoutMs);
-        return RestClient.builder()
+        return builder
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
                 .build();
