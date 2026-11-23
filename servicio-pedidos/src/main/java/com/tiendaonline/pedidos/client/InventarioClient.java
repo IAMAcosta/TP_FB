@@ -24,9 +24,10 @@ public class InventarioClient {
 
     private final RestClient restClient;
 
-    public InventarioClient(@Value("${servicios.inventario.url:http://localhost:8082}") String baseUrl,
+    public InventarioClient(RestClient.Builder builder,
+                            @Value("${servicios.inventario.url:http://localhost:8082}") String baseUrl,
                             @Value("${servicios.timeout-ms:5000}") int timeoutMs) {
-        this.restClient = RestClients.crear(baseUrl, timeoutMs);
+        this.restClient = RestClients.crear(builder, baseUrl, timeoutMs);
     }
 
     /**

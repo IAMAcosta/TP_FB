@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.MediaType;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -44,7 +45,7 @@ class ClientesClientTest {
     @BeforeEach
     void preparar() {
         mockServer.reset();
-        client = new ClientesClient("http://localhost:" + puerto, 500);
+        client = new ClientesClient(RestClient.builder(), "http://localhost:" + puerto, 500);
     }
 
     @Test
@@ -77,7 +78,7 @@ class ClientesClientTest {
 
     @Test
     void existeLanzaServicioNoDisponibleSiNadieEscucha() throws IOException {
-        ClientesClient sinServidor = new ClientesClient("http://localhost:" + puertoLibre(), 500);
+        ClientesClient sinServidor = new ClientesClient(RestClient.builder(), "http://localhost:" + puertoLibre(), 500);
 
         assertThatThrownBy(() -> sinServidor.existe(5))
                 .isInstanceOf(ServicioNoDisponibleException.class);
