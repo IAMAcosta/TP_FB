@@ -30,11 +30,12 @@ public class ReservaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Reserva stock de un producto para un pedido")
-    @ApiResponse(responseCode = "201", description = "Reserva creada")
+    @Operation(summary = "Reserva stock de un producto para un pedido",
+            description = "Si se repite la misma reserva (mismo pedido, producto y cantidad) devuelve la reserva que ya existe y no descuenta stock de nuevo.")
+    @ApiResponse(responseCode = "201", description = "Reserva creada (o la misma reserva que ya existía, si se repite el pedido)")
     @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @ApiResponse(responseCode = "404", description = "El producto no existe", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    @ApiResponse(responseCode = "409", description = "No hay stock suficiente", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "No hay stock suficiente, el pedido ya tiene una reserva de ese producto con otra cantidad, o esa reserva ya fue liberada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ReservaResponse reservar(@Valid @RequestBody ReservaCrearRequest request) {
         return reservaService.reservar(request);
     }

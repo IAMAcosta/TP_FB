@@ -166,6 +166,20 @@ class ReservaControllerTest {
     }
 
     @Test
+    void postReservaYaLiberadaDevuelve409() throws Exception {
+
+        when(reservaService.reservar(any()))
+                .thenThrow(new ReservaConflictoException("La reserva del pedido 21 para el producto 5 ya fue liberada"));
+
+        mockMvc.perform(post("/reservas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productoId\": 5, \"pedidoId\": 21, \"cantidad\": 3}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.mensaje").value("La reserva del pedido 21 para el producto 5 ya fue liberada"));
+    }
+
+    @Test
     void postLiberacionDevuelve200ConLaCantidadDeReservasLiberadas() throws Exception {
 
         when(reservaService.liberar(any()))
