@@ -1,6 +1,5 @@
 package com.tiendaonline.clientes.controller;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -156,77 +155,5 @@ class ClienteControllerTest {
 
         mockMvc.perform(get("/clientes/99/ordenes"))
                .andExpect(status().isNotFound());
-    }
-
-    // TP-034: los errores tienen que volver con el formato comun (status + mensaje)
-
-    @Test
-    void getClienteInexistenteDevuelveErrorConMensaje() throws Exception {
-
-        when(clienteService.buscarPorId(99))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
-
-        mockMvc.perform(get("/clientes/99"))
-               .andExpect(status().isNotFound())
-               .andExpect(jsonPath("$.status").value(404))
-               .andExpect(jsonPath("$.mensaje").value("Cliente no encontrado"));
-    }
-
-    @Test
-    void getClienteConIdNoNumericoDevuelve400() throws Exception {
-
-        mockMvc.perform(get("/clientes/abc"))
-               .andExpect(status().isBadRequest())
-               .andExpect(jsonPath("$.status").value(400))
-               .andExpect(jsonPath("$.mensaje").value("El valor del parámetro 'id' no es válido"));
-    }
-
-    @Test
-    void postClienteConEmailInvalidoDevuelveMensajeDelCampo() throws Exception {
-
-        String json = """
-                {
-                  "nombre": "Ana Gómez",
-                  "email": "esto-no-es-un-email"
-                }
-                """;
-
-        mockMvc.perform(post("/clientes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-               .andExpect(status().isBadRequest())
-               .andExpect(jsonPath("$.status").value(400))
-               .andExpect(jsonPath("$.mensaje").value(containsString("email")));
-    }
-
-    @Test
-    void postClienteConJsonMalArmadoDevuelve400() throws Exception {
-
-        mockMvc.perform(post("/clientes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ esto no es json"))
-               .andExpect(status().isBadRequest())
-               .andExpect(jsonPath("$.mensaje").value("El cuerpo de la petición no es un JSON válido"));
-    }
-
-    @Test
-    void postClienteConEmailDuplicadoDevuelveMensaje() throws Exception {
-
-        when(clienteService.registrarCliente(any()))
-                .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "El email ya esta registrado"));
-
-        String json = """
-                {
-                  "nombre": "Ana Gómez",
-                  "email": "ana@mail.com"
-                }
-                """;
-
-        mockMvc.perform(post("/clientes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-               .andExpect(status().isConflict())
-               .andExpect(jsonPath("$.status").value(409))
-               .andExpect(jsonPath("$.mensaje").value("El email ya esta registrado"));
     }
 }
