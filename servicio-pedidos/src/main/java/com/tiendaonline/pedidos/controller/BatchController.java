@@ -3,6 +3,7 @@ package com.tiendaonline.pedidos.controller;
 import com.tiendaonline.pedidos.batch.ExpirarPedidosLauncher;
 import com.tiendaonline.pedidos.dto.ErrorResponse;
 import com.tiendaonline.pedidos.dto.JobExecutionResumenResponse;
+import com.tiendaonline.pedidos.exception.BatchEnEjecucionException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,6 +43,11 @@ public class BatchController {
             // TP-036: mismo formato de error que el resto de la API (ErrorResponse)
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ErrorResponse.of(HttpStatus.CONFLICT, "El job de expiración ya se encuentra en ejecución"));
+        } catch (BatchEnEjecucionException e) {
+            // lo tira el launcher si ya hay una corrida en curso (TP-031).
+            // Va antes del catch de Exception, si no ese lo agarra y devuelve 500
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ErrorResponse.of(HttpStatus.CONFLICT, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR,

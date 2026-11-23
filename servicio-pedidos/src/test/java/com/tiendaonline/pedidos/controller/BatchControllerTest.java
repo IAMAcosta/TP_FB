@@ -2,6 +2,7 @@ package com.tiendaonline.pedidos.controller;
 
 import com.tiendaonline.pedidos.batch.ExpirarPedidosLauncher;
 import com.tiendaonline.pedidos.dto.JobExecutionResumenResponse;
+import com.tiendaonline.pedidos.exception.BatchEnEjecucionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,17 @@ class BatchControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.mensaje").value("El job de expiración ya se encuentra en ejecución"));
+    }
+
+    @Test
+    void siYaHayUnaCorridaEnCursoDevuelve409() throws Exception {
+        when(launcher.ejecutar("MANUAL_DEMO"))
+                .thenThrow(new BatchEnEjecucionException("Ya existe una corrida de expirarPedidosJob en ejecución"));
+
+        mockMvc.perform(post("/batch/expirar-pedidos"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.mensaje").value("Ya existe una corrida de expirarPedidosJob en ejecución"));
     }
 
     @Test
