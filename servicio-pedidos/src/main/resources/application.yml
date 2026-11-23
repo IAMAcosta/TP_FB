@@ -39,6 +39,17 @@ management:
         "[http.server.requests]": true
 =======
 servicios:
+<<<<<<< HEAD
     inevntario: 
         url: http://localhost:8082
 >>>>>>> 1c17ac2 (Tarea 029)
+=======
+    inventario: 
+        url: http://localhost:8082
+      
+batch:
+  expiracion:
+    scheduler-enabled: true
+    cron: "0 0 2 * * *"   
+    zone: "America/Argentina/Buenos_Aires"
+>>>>>>> cced83e (feat(pedidos) programacion nocturna, disparo manual y tests de batch)
