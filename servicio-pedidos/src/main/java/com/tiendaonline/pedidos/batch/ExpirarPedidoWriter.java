@@ -25,8 +25,9 @@ public class ExpirarPedidoWriter implements ItemWriter<Pedido> {
     @Override
     public void write(Chunk<? extends Pedido> chunk) {
         for (Pedido pedido : chunk.getItems()) {
+            int liberadas;
             try {
-                inventarioClient.liberar(pedido.getId());
+                liberadas = inventarioClient.liberar(pedido.getId());
             } catch (RuntimeException e) {
                 log.warn("No se pudo liberar stock para pedido id={} en servicio-inventario: {}",
                         pedido.getId(), e.getMessage());
@@ -35,7 +36,13 @@ public class ExpirarPedidoWriter implements ItemWriter<Pedido> {
 
             pedidoRepository.save(pedido);
 
-            log.info("Pedido id={} expirado y reserva de stock liberada correctamente", pedido.getId());
+            if (liberadas == 0) {
+                log.info("Pedido id={} expirado (sin reservas activas pendientes; liberación idempotente)",
+                        pedido.getId());
+            } else {
+                log.info("Pedido id={} expirado y {} reserva(s) de stock liberada(s)",
+                        pedido.getId(), liberadas);
+            }
         }
     }
 }
