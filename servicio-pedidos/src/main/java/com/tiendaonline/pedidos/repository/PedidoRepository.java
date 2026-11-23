@@ -23,7 +23,4 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
 
     Page<Pedido> findByEstadoAndFechaCreacionBeforeOrderByFechaCreacionAscIdAsc(
             EstadoPedido estado, LocalDateTime limite, Pageable pageable);
-
-    List<Pedido> findByEstadoAndFechaCreacionBeforeAndIdGreaterThanOrderByIdAsc(
-            EstadoPedido estado, LocalDateTime limite, Integer ultimoId, Pageable pageable);
 }
