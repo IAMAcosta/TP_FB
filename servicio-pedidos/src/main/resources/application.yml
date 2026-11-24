@@ -36,3 +36,13 @@ management:
     distribution:
       percentiles-histogram:
         "[http.server.requests]": true
+
+servicios:
+  inventario:
+    url: http://localhost:8082
+
+batch:
+  expiracion:
+    scheduler-enabled: true
+    cron: "0 0 2 * * *"
+    zone: "America/Argentina/Buenos_Aires"

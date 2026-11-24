@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
         return respuesta(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler({StockInsuficienteException.class, EstadoPedidoInvalidoException.class})
+    @ExceptionHandler({StockInsuficienteException.class, EstadoPedidoInvalidoException.class, BatchEnEjecucionException.class})
     public ResponseEntity<ErrorResponse> handleConflicto(RuntimeException ex) {
         return respuesta(HttpStatus.CONFLICT, ex.getMessage());
     }
@@ -59,4 +59,6 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ErrorResponse> respuesta(HttpStatus estado, String mensaje) {
         return ResponseEntity.status(estado).body(ErrorResponse.of(estado, mensaje));
     }
+
+
 }

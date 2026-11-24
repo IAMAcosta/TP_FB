@@ -48,6 +48,7 @@ public class PedidoController {
     @GetMapping("/{id}")
     @Operation(summary = "Consulta un pedido por su id")
     @ApiResponse(responseCode = "200", description = "Pedido encontrado")
+    @ApiResponse(responseCode = "400", description = "El id no es un número", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @ApiResponse(responseCode = "404", description = "El pedido no existe",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public PedidoResponse obtener(@PathVariable Integer id) {
