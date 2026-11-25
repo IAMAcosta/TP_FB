@@ -10,7 +10,7 @@ por HTTP.
 ## Estructura del repositorio
 
 ```
-TP_FUBE/
+TP_FB/
 ├── servicio-clientes/     # Clientes (registro, consulta, flag mask-pii, pedidos del cliente)
 ├── servicio-inventario/   # Productos, stock y reservas
 ├── servicio-pedidos/      # Pedidos (creación con reserva de stock, cancelación, job batch de expiración)
@@ -312,7 +312,7 @@ Con PostgreSQL corriendo (algunos tests de integración y de repositorio usan la
 |---|---|---|
 | `Cannot find a Java installation on your machine matching ... languageVersion=17` | No hay JDK 17 instalado | Instalar Temurin 17 (ver Requisitos) y reabrir la terminal |
 | `"." no se reconoce como un comando` | Terminal CMD | Usar `gradlew ...` sin `./`, o usar Git Bash |
-| `gradlew: command not found` / no encuentra el archivo | La terminal no está en la raíz del repo | `cd` a la carpeta `TP_FUBE` |
+| `gradlew: command not found` / no encuentra el archivo | La terminal no está en la raíz del repo | `cd` a la carpeta `TP_FB` |
 | `FATAL: no existe la base de datos "clientes_db"` | Falta crear la base, o hay dos servidores PostgreSQL y se creó en el que no usa el puerto 5432 | Crear las 3 bases en el servidor del puerto 5432 (en pgAdmin: clic derecho en el servidor → Properties → Connection) |
 | pgAdmin: `connection timeout expired` | El servidor PostgreSQL no está instalado o está detenido | Instalar el servidor, o iniciar el servicio `postgresql-x64-NN` en *Servicios* de Windows |
 | `Falta configurar STATSIG_SERVER_SECRET` | No está la variable de entorno | Ver paso 3 |
